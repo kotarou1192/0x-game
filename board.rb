@@ -23,15 +23,12 @@ class Board
   end
 
   def print_board
-    puts '┏━┳━┳━┓'
-    @board.each_with_index do |line, index|
+    @board.each do |line|
       formatted_line = '┃'
       formatted_line += line.map do |square|
         "#{square}┃"
       end.join
       puts formatted_line
-      puts '┣━╋━╋━┫' if index < @board.size - 1
-      puts '┗━┻━┻━┛' if index == @board.size - 1
     end
   end
 end
