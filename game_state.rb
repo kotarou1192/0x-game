@@ -4,8 +4,8 @@
 class GameState
   attr_reader :turn
 
-  def initialize
-    order_of_turn rand 2
+  def initialize(num)
+    order_of_turn num
     @turn = 0
   end
 
