@@ -1,36 +1,60 @@
+# frozen_string_literal: true
+
 require './game_rule.rb'
+require './min_max.rb'
 
 class ComputerPlayer
   attr_reader :mark
 
-  def initialize(mark:, opponent_mark:)
+  def initialize(mark:, opponent_mark:, board:, game_state:)
+    @board = board
+    @min_max = MinMax.new(player_mark: mark, opponent_mark: opponent_mark)
     @mark = mark
     @opponent_mark = opponent_mark
+    @game_state = game_state
   end
 
-  def put(board:)
-    @board = board
-    if reach?
+  def put(game_board:)
+    if @game_state.turn == 0
+      x = rand(3)
+      y = rand(3)
+    else
+      x, y = @min_max.strongest_position(game_board: game_board)
+    end
+    @board.put_mark(mark: @mark, board_x: x, board_y: y)
+    @game_state.proceed_turn
+  end
+
+  def put_softly(game_board:)
+    board = game_board
+    if reach? board
       finish
+      @game_state.proceed_turn
       return
     end
     if opponent_reach?
       defence
+      @game_state.proceed_turn
       return
     end
-    x, y = attack copy_array @board.board
+    x, y = attack copy_array board
     @board.put_mark(mark: @mark, board_x: x, board_y: y)
+    @game_state.proceed_turn
   end
 
   private
 
-  def reach?(board = @board.board)
+  # 以下古いアルゴリズム（難読）
+
+  def reach?(board)
     board.each_with_index do |line, index_y|
       line.each_with_index do |block, index_x|
         if block == '.'
           copied_board = copy_array(board)
           copied_board[index_y][index_x] = @mark
-          return true if GameRule.new(game_board: copied_board).mark_align?(@mark)
+          if GameRule.new(game_board: copied_board).mark_align?(@mark)
+            return true
+          end
         end
         next
       end
@@ -44,7 +68,9 @@ class ComputerPlayer
         if block == '.'
           copied_board = copy_array(board)
           copied_board[index_y][index_x] = @opponent_mark
-          return true if GameRule.new(game_board: copied_board).mark_align?(@opponent_mark)
+          if GameRule.new(game_board: copied_board).mark_align?(@opponent_mark)
+            return true
+          end
         end
         next
       end
@@ -96,12 +122,10 @@ class ComputerPlayer
     until queue.empty?
       _x, _y, @marked_board, is_my_turn = queue.shift
       _x, _y, @memo_board, _is_my_turn = queue2.shift
-      # print_board @marked_board
-      # sleep 1
 
-      next if game_finished?(@marked_board)
-      # if GameRule.new(game_board: @marked_board).mark_align?(@mark)
-      next if GameRule.new(game_board: @marked_board).mark_align?(@opponent_mark)
+      if GameRule.new(game_board: @marked_board).mark_align?(@opponent_mark)
+        next
+      end
 
       count += 1 unless before_turn == is_my_turn
       before_turn = is_my_turn
@@ -109,12 +133,11 @@ class ComputerPlayer
       enqueue(queue, @marked_board, is_my_turn)
       enqueue2(queue2, @memo_board, is_my_turn, count)
     end
-    print_board @memo_board
-    search_first_turn_by_board
+    search_first_turn_by_board @memo_board
   end
 
-  def search_first_turn_by_board
-    @memo_board.each_with_index do |line, index|
+  def search_first_turn_by_board(board)
+    board.each_with_index do |line, index|
       return [line.find_index(0), index] if line.any?(0)
     end
   end
@@ -129,7 +152,9 @@ class ComputerPlayer
         elsif block == '.' && is_my_turn == false
           copied_board = copy_array(board)
           copied_board[index_y][index_x] = @opponent_mark
-          queue.push [index_x, index_y, copied_board, !is_my_turn]
+          unless GameRule.new(game_board: copied_board).mark_align?(@opponent_mark)
+            queue.push [index_x, index_y, copied_board, !is_my_turn]
+          end
         end
       end
     end
@@ -145,16 +170,10 @@ class ComputerPlayer
         elsif block == '.' && is_my_turn == false
           copied_board = copy_array(board)
           copied_board[index_y][index_x] = @opponent_mark
-          queue.push [index_x, index_y, copied_board, !is_my_turn]
+          unless GameRule.new(game_board: copied_board).mark_align?(@opponent_mark)
+            queue.push [index_x, index_y, copied_board, !is_my_turn]
+          end
         end
-      end
-    end
-  end
-
-  def game_finished?(board)
-    board.none? do |line|
-      line.any? do |square|
-        square == '.'
       end
     end
   end
@@ -164,16 +183,6 @@ class ComputerPlayer
       line.map do |value|
         value
       end
-    end
-  end
-
-  def print_board(board)
-    board.each do |line|
-      formatted_line = '┃'
-      formatted_line += line.map do |square|
-        "#{square}┃"
-      end.join
-      puts formatted_line
     end
   end
 end
