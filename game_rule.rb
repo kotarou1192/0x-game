@@ -1,6 +1,6 @@
 class GameRule
-  def initialize(board:)
-    @board = board.board
+  def initialize(game_board:)
+    @board = game_board
   end
 
   def mark_align?(mark)
@@ -14,6 +14,14 @@ class GameRule
     end
 
     false
+  end
+
+  def all_squares_put?
+    @board.none? do |line|
+      line.any? do |square|
+        square == '.'
+      end
+    end
   end
 
   private
