@@ -23,7 +23,7 @@ if game_mode == 2
   puts 'you choose game mode 2, choose order to attack. 0 is o first, 1 is second'
   loop do
     order_to_attack = gets.to_i
-    break if order_to_attack == 1 || order_to_attack == 2
+    break if order_to_attack == 0 || order_to_attack == 1
 
     puts 'input again'
   end
