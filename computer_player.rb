@@ -37,7 +37,12 @@ class ComputerPlayer
       @game_state.proceed_turn
       return
     end
-    x, y = attack copy_array board
+    if @game_state.turn == 0
+      x = rand(3)
+      y = rand(3)
+    else
+      x, y = attack copy_array board
+    end
     @board.put_mark(mark: @mark, board_x: x, board_y: y)
     @game_state.proceed_turn
   end
