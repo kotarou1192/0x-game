@@ -18,6 +18,9 @@ class Board
     if board_y.negative? || board_y >= @board_size
       raise ArgumentError, "board_y must be between 0 to #{@board_size - 1}"
     end
+    unless @board[board_y][board_x] == '.'
+      raise ArgumentError, 'already put a mark'
+    end
 
     @board[board_y][board_x] = mark
   end
