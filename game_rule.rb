@@ -16,7 +16,7 @@ class GameRule
     false
   end
 
-  def all_squares_put?
+  def all_squares_marked?
     @board.none? do |line|
       line.any? do |square|
         square == '.'
